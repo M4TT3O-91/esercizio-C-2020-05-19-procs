@@ -13,7 +13,7 @@
 #include <semaphore.h>
 
 #define N 5
-#define COUNTDOWN  10
+#define COUNTDOWN  1000
 
 #define CHECK_ERR(a,msg) {if ((a) == -1) { perror((msg)); exit(EXIT_FAILURE); } }
 #define CHECK_ERR_MMAP(a,msg) {if ((a) == MAP_FAILED) { perror((msg)); exit(EXIT_FAILURE); } }
@@ -29,8 +29,12 @@ shared_var *shared;
 
 void child_process(int indice) {
 
-//	printf("[child] start con pid = %d countdown = %d \n", getpid(), shared->countdown);
+	if (shared->shutdown != 0) {
+			printf("[child] con pid = %d EXIT_SUCCESS \n", getpid());
+			exit(EXIT_SUCCESS);
+		}
 
+//	printf("[child] start con pid = %d countdown = %d \n", getpid(), shared->countdown);
 	if (sem_wait(&shared->mutex) == -1) {
 		perror("sem_wait");
 		exit(EXIT_FAILURE);
@@ -39,14 +43,10 @@ void child_process(int indice) {
 
 	if (shared->countdown > 0) {
 		shared->countdown--;
-//		printf("[child] con pid = %d countdown = %d \n", getpid(),
-//				shared->countdown);
+		printf("[child] con pid = %d countdown = %d \n", getpid(),
+				shared->countdown);
 		shared->process_counter[indice]++;
 	}
-	if (shared->shutdown != 0) {
-			printf("[child] con pid = %d EXIT_SUCCESS \n", getpid());
-			exit(EXIT_SUCCESS);
-		}
 
 	if (sem_post(&shared->mutex) == -1) {
 		perror("sem_post");
@@ -87,7 +87,7 @@ int main(void) {
 			while (shared->countdown == 0) {
 				//printf("[child] con pid = %d in ATTESA \n", getpid());
 			}
-			for(;;)
+			for (;;)
 				child_process(i);
 			break;
 		case -1:
@@ -99,21 +99,24 @@ int main(void) {
 	}
 	// Processo padre dorme 1 secondo
 
-	//sleep(1);
+	sleep(1);
 	shared->countdown = COUNTDOWN;
-	printf("SLEEP OUT ------->  fork_var->countdown dopo = %d\n",
-			shared->countdown);
+	printf("SLEEP OUT ------->  shared->countdown = %d\n", shared->countdown);
 
-	do {
-		printf("Ciclo do-while-----------------fork_var->countdown = %d\n",
-				shared->countdown);
-
+	while (shared->shutdown == 0) {
 		if (shared->countdown == 0) {
-			printf("**S**H**U**T**D**O**W**N**");
-			shared->shutdown = 1;
+			printf("**S**H**U**T**D**O**W**N**\n");
+			shared->shutdown += 1;
 		}
+	}
+	printf("SHUTDOWN = %d\n", shared->shutdown);
+
+	for (int k = 0; k < N; k++) {
+//		printf("Ciclo do-while-----------------fork_var->countdown = %d\n",
+//				shared->countdown);
 		res = wait(NULL); // Aspetto tutti i processi
-	} while (res != -1);
+	}
+	//while (res != -1);
 
 	printf("Il valore di process counter è: \n");
 	for (int j = 0; j < N; j++) {
