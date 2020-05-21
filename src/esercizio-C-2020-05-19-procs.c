@@ -107,7 +107,6 @@ int main(void) {
 	}
 	printf("[parent] Shutdown is set 1\n");
 
-	//for (int k = 0; k < N; k++) {
 	do{
 		res = wait(NULL); // Aspetto tutti i processi
 	}while(res != -1);
