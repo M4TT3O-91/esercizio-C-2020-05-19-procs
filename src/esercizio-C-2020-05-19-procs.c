@@ -12,8 +12,8 @@
 #include <errno.h>
 #include <semaphore.h>
 
-#define N 3
-#define COUNTDOWN  100
+#define N 10
+#define COUNTDOWN  100000
 
 #define CHECK_ERR(a,msg) {if ((a) == -1) { perror((msg)); exit(EXIT_FAILURE); } }
 #define CHECK_ERR_MMAP(a,msg) {if ((a) == MAP_FAILED) { perror((msg)); exit(EXIT_FAILURE); } }
@@ -82,9 +82,6 @@ int main(void) {
 		switch (pid) {
 		case 0: // child process
 			printf("[child] start with pid = %d\n", getpid());
-			while (shared->countdown == 0) {
-				//printf("[child] con pid = %d in ATTESA \n", getpid());
-			}
 			while (1)
 				child_process(i);
 			break;
